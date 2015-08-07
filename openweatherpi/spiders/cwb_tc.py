@@ -36,52 +36,54 @@ class CwbTcSpider(scrapy.Spider):
         #num = scrapy.Selector(text=lines).xpath('//kml/document/folder/folder').extract()
         report_time = scrapy.Selector(text=lines).xpath('//kml/document/folder/description/text()').extract()[0]
         # ### Current ###
-        current = scrapy.Selector(text=lines).xpath('//kml/document/folder/folder/placemark')
-        desc = re.sub('[\r\n]','', current.xpath('description/text()').extract()[0])
-        code = re.sub(u".*編號第 ",'',desc)
-        code = "%sW"%re.sub(' .*','', code)
-        name = re.sub(u".*國際命名 ",'',desc)
-        name = re.sub(u"\).*",'',name)
-        current_location = re.split(',',current.xpath('point/coordinates/text()').extract()[0])
-        tc = TropicalCycloneItem()
-        tc['agency'] = self.agency
-        tc['report_time'] = report_time
-        tc['code'] = code
-        tc['latitude'] = round(float(current_location[1]), 2)
-        tc['longitude'] = round(float(current_location[0]), 2)
-        tc['position_time'] = report_time
-        tc['name'] = name
-        tc['position_type'] = u'C'
-        cyclone_type = re.sub(u' .*', '', desc)
-        if re.search(u'.*熱帶性低氣壓.*',cyclone_type):
-            tc['cyclone_type'] = u"TD"
-        elif re.search(u'.*輕度颱風.*',cyclone_type):
-            tc['cyclone_type'] = u"TS"
-        elif re.search(u'.*中度颱風.*',cyclone_type):
-            tc['cyclone_type'] = u"TY"
-        elif re.search(u'.*強烈颱風.*',cyclone_type):
-            tc['cyclone_type'] = u"STY"
-        else:
-            tc['cyclone_type'] = u""
-        tc['pressure'] = re.sub(u'.*中心氣壓 ', '', desc)
-        tc['pressure'] = int(re.sub(u' .*', '', tc['pressure']))
-        tc['wind_speed'] = re.sub(u'.*近中心最大風速每秒 ', '', desc)
-        tc['wind_speed'] = int(round(int(re.sub(u' .*', '', tc['wind_speed'])) * self.mps2kmh, 0))
-        tc['wind_unit'] = self.wind_unit
-        tc_items.append(tc)
-        # ### Forecasts ###
-        for i in scrapy.Selector(text=lines).xpath('//kml/document/folder/folder/folder/placemark'):
-            forecast_time = i.xpath(u'name/text()').extract()[0].encode('ascii',"ignore")
-            forecast_location = re.split(',',i.xpath('point/coordinates/text()').extract()[0])
+        current = scrapy.Selector(text=lines).xpath('//kml/document/folder/folder')
+        for cyclone in current:
+            desc = re.sub('[\r\n]','', cyclone.xpath('placemark/description/text()').extract()[0])
+            code = re.sub(u".*編號第 ",'',desc)
+            code = "%sW"%re.sub(' .*','', code)
+            name = re.sub(u".*國際命名 ",'',desc)
+            name = re.sub(u"\).*",'',name)
+            current_location = re.split(',',cyclone.xpath('placemark/point/coordinates/text()').extract()[0])
             tc = TropicalCycloneItem()
             tc['agency'] = self.agency
             tc['report_time'] = report_time
             tc['code'] = code
-            tc['latitude'] = round(float(forecast_location[1]), 2)
-            tc['longitude'] = round(float(forecast_location[0]), 2)
-            now = datetime.now()
-            tc['position_time'] = datetime.strptime(u"%s"%now.year+forecast_time,'%Y%m%d%H').isoformat()
+            tc['latitude'] = round(float(current_location[1]), 2)
+            tc['longitude'] = round(float(current_location[0]), 2)
+            tc['position_time'] = report_time
             tc['name'] = name
-            tc['position_type'] = u'F'
+            tc['position_type'] = u'C'
+            cyclone_type = re.sub(u' .*', '', desc)
+            if re.search(u'.*熱帶性低氣壓.*',cyclone_type):
+                tc['cyclone_type'] = u"TD"
+            elif re.search(u'.*輕度颱風.*',cyclone_type):
+                tc['cyclone_type'] = u"TS"
+            elif re.search(u'.*中度颱風.*',cyclone_type):
+                tc['cyclone_type'] = u"TY"
+            elif re.search(u'.*強烈颱風.*',cyclone_type):
+                tc['cyclone_type'] = u"STY"
+            else:
+                tc['cyclone_type'] = u""
+            tc['pressure'] = re.sub(u'.*中心氣壓 ', '', desc)
+            tc['pressure'] = int(re.sub(u' .*', '', tc['pressure']))
+            tc['wind_speed'] = re.sub(u'.*近中心最大風速每秒 ', '', desc)
+            tc['wind_speed'] = int(round(int(re.sub(u' .*', '', tc['wind_speed'])) * self.mps2kmh, 0))
+            tc['wind_unit'] = self.wind_unit
             tc_items.append(tc)
+            # ### Forecasts ###
+            #for i in scrapy.Selector(text=lines).xpath('//kml/document/folder/folder/folder/placemark'):
+            for i in cyclone.xpath('folder/placemark'):
+                forecast_time = i.xpath(u'name/text()').extract()[0].encode('ascii',"ignore")
+                forecast_location = re.split(',',i.xpath('point/coordinates/text()').extract()[0])
+                tc = TropicalCycloneItem()
+                tc['agency'] = self.agency
+                tc['report_time'] = report_time
+                tc['code'] = code
+                tc['latitude'] = round(float(forecast_location[1]), 2)
+                tc['longitude'] = round(float(forecast_location[0]), 2)
+                now = datetime.now()
+                tc['position_time'] = datetime.strptime(u"%s"%now.year+forecast_time,'%Y%m%d%H').isoformat()
+                tc['name'] = name
+                tc['position_type'] = u'F'
+                tc_items.append(tc)
         return tc_items
