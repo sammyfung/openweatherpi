@@ -7,7 +7,7 @@ from weatherdata.models import TropicalCyclone
 
 class OpenweatherpiPipeline(object):
     def process_item(self, item, spider):
-        if spider.name == 'cwb_tc':
+        if spider.name == 'cwb_tc' or spider.name == 'cwb_tc_hourly':
             if not TropicalCyclone.objects.filter(report_time = item['report_time'], agency=item['agency'],
                                                   position_time = item['position_time'], code=item['code'],
                                                   position_type = item['position_type']):
