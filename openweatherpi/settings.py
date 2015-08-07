@@ -16,6 +16,17 @@ NEWSPIDER_MODULE = 'openweatherpi.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'openweatherpi (+http://www.yourdomain.com)'
 
+# Scrapy Item Pipelines in Active
+ITEM_PIPELINES = {
+  'openweatherpi.pipelines.OpenweatherpiPipeline': 300,
+}
+
+# Configuration for DjangoItems
+import sys, os
+django_path = os.path.join(os.path.dirname(__file__),'../openweatherdata')
+sys.path.append(os.path.abspath(django_path))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'openweatherdata.settings'
+
 # Getting enviornment variables
 import os
 CWB_USERNAME = os.environ['CWB_USERNAME']

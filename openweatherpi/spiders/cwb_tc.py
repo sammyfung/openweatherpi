@@ -13,6 +13,7 @@ class CwbTcSpider(scrapy.Spider):
     )
     agency = u'CWB'
     mps2kmh = 3.6
+    wind_unit = u'KMH'
 
     def parse(self, response):
         s = scrapy.conf.settings
@@ -50,7 +51,7 @@ class CwbTcSpider(scrapy.Spider):
         tc['longitude'] = round(float(current_location[0]), 2)
         tc['position_time'] = report_time
         tc['name'] = name
-        tc['position_type'] = u'Current'
+        tc['position_type'] = u'C'
         cyclone_type = re.sub(u' .*', '', desc)
         if re.search(u'.*熱帶性低氣壓.*',cyclone_type):
             tc['cyclone_type'] = u"TD"
@@ -66,7 +67,7 @@ class CwbTcSpider(scrapy.Spider):
         tc['pressure'] = int(re.sub(u' .*', '', tc['pressure']))
         tc['wind_speed'] = re.sub(u'.*近中心最大風速每秒 ', '', desc)
         tc['wind_speed'] = int(round(int(re.sub(u' .*', '', tc['wind_speed'])) * self.mps2kmh, 0))
-        tc['wind_unit'] = u'kmh'
+        tc['wind_unit'] = self.wind_unit
         tc_items.append(tc)
         # ### Forecasts ###
         for i in scrapy.Selector(text=lines).xpath('//kml/document/folder/folder/folder/placemark'):
@@ -81,6 +82,6 @@ class CwbTcSpider(scrapy.Spider):
             now = datetime.now()
             tc['position_time'] = datetime.strptime(u"%s"%now.year+forecast_time,'%Y%m%d%H').isoformat()
             tc['name'] = name
-            tc['position_type'] = u'Forecast'
+            tc['position_type'] = u'F'
             tc_items.append(tc)
         return tc_items
