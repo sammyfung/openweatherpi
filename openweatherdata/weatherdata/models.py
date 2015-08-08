@@ -5,13 +5,16 @@ from django.db import models
 class TropicalCyclone(models.Model):
     AGENCY_CHOICES = (
         ('CWB', 'Central Weather Bureau'),
+        ('HKO', 'Hong Kong Observatory'),
+        ('JMA', 'Japan Meteorological Agency'),
+        ('JTWC', 'Joint Typhoon Warning Center'),
     )
     POS_TYPE_CHOICES = (
         ('C', 'Current'),
         ('F', 'Forecast'),
     )
     TC_TYPE_CHOICES = (
-        ('DIS', 'Tropical Disturbance'),
+        ('LPA', 'Low Pressure Area'),
         ('TD', 'Tropical Depression'),
         ('TS', 'Tropical Storm'),
         ('TY', 'Typhoon'),
@@ -30,6 +33,7 @@ class TropicalCyclone(models.Model):
     latitude = models.FloatField(verbose_name='Latitude') # N - positive, S - negative
     longitude = models.FloatField(verbose_name='Longitude') # E - positive, W - positive
     pressure = models.IntegerField(verbose_name='Surface Pressure', blank=True, null=True)
-    wind_speed = models.IntegerField(verbose_name='Max Sustained Wind', blank=True, null=True)
+    wind_speed = models.IntegerField(verbose_name='Max Sustained Wind Speed', blank=True, null=True)
+    gust_speed = models.IntegerField(verbose_name='Max Gust Speed', blank=True, null=True)
     wind_unit = models.CharField(verbose_name='Wind Unit',max_length=3, blank=True, null=True, choices=WIND_UNIT_CHOICES)
 
