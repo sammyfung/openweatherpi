@@ -43,9 +43,14 @@ $ cd openweatherpi
 
 $ scrapy crawl cwb_tc
 
-$ scrapy crawl cwb_tc_hourly
-
 **Web Scraping JTWC Tropical Cyclone Data**
 
 $ scrapy crawl jtwc
 
+**Web Scraping HKO Tropical Cyclone Data**
+
+$ scrapy crawl hko_tc
+
+**Web Scraping JMA Tropical Cyclone Data**
+
+$ scrapy crawl jma_tc
