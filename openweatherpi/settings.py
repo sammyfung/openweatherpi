@@ -29,5 +29,9 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'openweatherdata.settings'
 
 # Getting enviornment variables
 import os
-CWB_USERNAME = os.environ['CWB_USERNAME']
-CWB_PASSWORD = os.environ['CWB_PASSWORD']
+if 'CWB_USERNAME' in os.environ and 'CWB_PASSWORD' in os.environ:
+  CWB_USERNAME = os.environ['CWB_USERNAME']
+  CWB_PASSWORD = os.environ['CWB_PASSWORD']
+else:
+  CWB_USERNAME = ''
+  CWB_PASSWORD = ''
