@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# openweatherpi - HKO Tropical Cyclone Web Scraper
+# Sammy Fung <sammy@sammy.hk>
 import scrapy, re
 from openweatherpi.items import TropicalCycloneItem
 from datetime import datetime

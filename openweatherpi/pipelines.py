@@ -14,7 +14,7 @@ class OpenweatherpiPipeline(object):
                 item.save()
             else:
                 raise DropItem("Duplicated %s data from %s report"%(item['agency'],item['report_time']))
-        elif spider.name == 'hko_tc':
+        elif spider.name == 'hko_tc' or spider.name == 'jma_tc':
             if not TropicalCyclone.objects.filter(agency=item['agency'],
                                                   position_time = item['position_time'], code=item['code'],
                                                   position_type = item['position_type']):
