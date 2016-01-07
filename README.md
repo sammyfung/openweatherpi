@@ -10,6 +10,14 @@ Author
 
 Sammy Fung < sammy@sammy.hk >
 
+
+Requirement
+-----------
+
+You must installed a django web framework project with openweather app.
+
+openweather app (for django) is available at https://github.com/sammyfung/openweather
+
 Installation
 ------------
 

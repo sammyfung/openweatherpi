@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # openweatherpi - CWB Tropical Cyclone Web Scraper
 # Sammy Fung <sammy@sammy.hk>
-import scrapy, re, StringIO, zipfile
+import scrapy, re, StringIO, zipfile, os
 from openweatherpi.items import TropicalCycloneItem
 from datetime import datetime
 
@@ -78,8 +78,8 @@ class CwbTcSpider(scrapy.Spider):
             return [ tc ]
 
     def login(self, response):
-        s = scrapy.conf.settings
-        form_data = { 'userid': s['CWB_USERNAME'], 'password': s['CWB_PASSWORD'] }
+        # Getting enviornment variables CWB_USERNAME and CWB_PASSWORD
+        form_data = { 'userid': os.environ['CWB_USERNAME'], 'password': os.environ['CWB_PASSWORD'] }
         return [scrapy.http.FormRequest.from_response(response, formdata = form_data, callback=self.after_login)]
 
     def after_login(self, response):

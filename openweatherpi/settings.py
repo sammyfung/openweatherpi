@@ -18,20 +18,15 @@ NEWSPIDER_MODULE = 'openweatherpi.spiders'
 
 # Scrapy Item Pipelines in Active
 ITEM_PIPELINES = {
-  'openweatherpi.pipelines.OpenweatherpiPipeline': 300,
+    'openweatherpi.pipelines.OpenweatherpiPipeline': 300,
 }
 
-# Configuration for DjangoItems
-import sys, os
-django_path = os.path.join(os.path.dirname(__file__),'../openweatherdata')
-sys.path.append(os.path.abspath(django_path))
-os.environ['DJANGO_SETTINGS_MODULE'] = 'openweatherdata.settings'
-
-# Getting enviornment variables
-import os
-if 'CWB_USERNAME' in os.environ and 'CWB_PASSWORD' in os.environ:
-  CWB_USERNAME = os.environ['CWB_USERNAME']
-  CWB_PASSWORD = os.environ['CWB_PASSWORD']
-else:
-  CWB_USERNAME = ''
-  CWB_PASSWORD = ''
+# Initialize Django web framework for data store
+# Use environment variable PYTHONPATH for abspath to Django project
+# and DJANGO_SETTINGS_MODULE for Settings filename of Django project
+try:
+    import django
+    django.setup()
+except ImportError:
+    # Allow to work without Django
+    pass
