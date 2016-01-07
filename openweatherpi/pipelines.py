@@ -3,7 +3,7 @@
 # Sammy Fung <sammy@sammy.hk>
 
 from scrapy.exceptions import DropItem
-from weatherdata.models import TropicalCyclone
+from openweather.models import TropicalCyclone
 
 class OpenweatherpiPipeline(object):
     def process_item(self, item, spider):

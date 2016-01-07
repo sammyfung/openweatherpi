@@ -31,15 +31,11 @@ $ source env/bin/activate
 
 $ pip install -r openweatherpi/requirement.txt
 
-**Initialize database for Django web framework in default sqlite and create first Django admin user:**
+**Setting enviornment variables for Django and CWB Account**
 
-$ cd openweatherpi/openweatherdata
+$ export PYTHONPATH=/full/path/to/your/django/project   
 
-$ ./manage.py makemigration
-
-$ ./manage.py syncdb
-
-**Setting CWB Username and Password**
+$ export DJANGO_SETTINGS_MODULE=just_filename_of_your_django_settings_file    
 
 $ export CWB_USERNAME='your@email.address'
 
