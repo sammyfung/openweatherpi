@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
 # openweatherpi - JTWC Tropical Cyclone Web Scraper
 # Sammy Fung <sammy@sammy.hk>
-import scrapy, StringIO, re
+import scrapy, io, re
 from openweatherpi.items import TropicalCycloneItem
 from datetime import datetime, timedelta
 
 class JtwcSpider(scrapy.Spider):
     name = "jtwc"
-    allowed_domains = ["usno.navy.mil", "anonymouse.org"]
-    proxy = 'http://anonymouse.org/cgi-bin/anon-www.cgi/'
+    allowed_domains = ["noaa.gov", "anonymouse.org"]
+    # Default with no web proxy
+    proxy = ''
+    #proxy = 'http://anonymouse.org/cgi-bin/anon-www.cgi/'
     start_urls = (
-        # ### Direct Access ###
-        #'http://www.usno.navy.mil/NOOC/nmfc-ph/RSS/jtwc/ab/abpwweb.txt',
-        # Thru Proxy:
-        #'%s%s'%(proxy, 'http://www.usno.navy.mil/NOOC/nmfc-ph/RSS/jtwc/ab/abpwweb.txt'),
-        # JTWC
-        '%s%s'%(proxy, 'http://www.usno.navy.mil/JTWC/'),
+        '%s%s'%(proxy, 'https://metoc.ndbc.noaa.gov/RSSFeeds-portlet/img/jtwc/jtwc.rss'),
     )
     agency = u'JTWC'
     ktstokmh = 1.852
@@ -33,13 +30,17 @@ class JtwcSpider(scrapy.Spider):
     def parse(self,response):
         items = []
         # Checking overview report
-        items += [ scrapy.Request(url='%s%s'%(self.proxy, 'http://www.usno.navy.mil/NOOC/nmfc-ph/RSS/jtwc/ab/abpwweb.txt'),
+        items += [ scrapy.Request(url='%s%s'%(self.proxy,
+                                              'https://metoc.ndbc.noaa.gov/ProductFeeds-portlet/img/jtwc/products/abpwweb.txt'),
                                   callback=self.parse_overview) ]
         # Checking for any TC reports for NW Pacfic Area
-        url = response.xpath('//table/tr/td[2]/ul/li/a/@href').extract()
-        for i in url:
-            if re.search('wp\d{4}web.txt', i):
-                items += [ scrapy.Request(url='%s%s'%(self.proxy, i), callback=self.parse_tc) ]
+        rss_items = response.xpath('//rss/channel/item/description/text()').extract()
+        for i in rss_items:
+            rss_item = scrapy.Selector(text=i)
+            url = rss_item.xpath('//ul/li/a/@href').extract()
+            for j in url:
+                if re.search('wp\d{4}web.txt', j):
+                    items += [ scrapy.Request(url='%s%s'%(self.proxy, j), callback=self.parse_tc) ]
         return items
 
     def parse_tc(self, response):
@@ -48,14 +49,15 @@ class JtwcSpider(scrapy.Spider):
         name = ''
         report_time = ''
         forecast = False
-        report = StringIO.StringIO(response.body)
+        report = io.BytesIO(response.body)
         lines = report.readlines()
         for line in lines:
-            if re.search(u'^WTPN\d{2}',line):
+            line = str(line, encoding='utf-8')
+            if re.search('^WTPN', line):
                 report_time = self.conv_reporttime(line)
             # ### Analyse TC Report ###
             # Tropical Cyclone Basic Information
-            if re.search(u'^1\. ', line):
+            if re.search('^1\. ', line):
                 if re.search(u'\(', line):
                     name = re.split('\(',line)[1]
                     name = re.split('\)',name)[0]
@@ -83,8 +85,8 @@ class JtwcSpider(scrapy.Spider):
                     if re.search(u'\dN', i):
                         tc['latitude'] = round(float(re.sub('N','',i)), 2)
                     if re.search(u'\dE', i):
-                        tc['longitude'] = round(float(re.sub('E','',i)), 2)
-            elif re.search(u'^\s*MAX SUSTAINED WINDS - ', line):
+                        tc['longitude'] = round(float(re.sub('E.*','',i)), 2)
+            elif re.search('MAX SUSTAINED WINDS - ', line):
                 line = re.sub(u'.*WINDS - ','',line)
                 line = re.split(' ', line)
                 wind_speed = int(round(int(line[0])*self.ktstokmh, 0))
@@ -110,9 +112,12 @@ class JtwcSpider(scrapy.Spider):
         td = [] # List of Tropical Disturbances
         report_time = ''
         item_list = []
-        report = StringIO.StringIO(response.body)
+        report = io.BytesIO(response.body)
         lines = report.readlines()
+        rl = str(lines[0])
+        rl = re.sub('\r', '', rl)
         for line in lines:
+            line = str(line)
             if re.search(u'^ABPW10',line):
                 report_time = self.conv_reporttime(line)
             # Looking into NW Pacific Area Information

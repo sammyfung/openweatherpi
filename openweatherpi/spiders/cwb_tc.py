@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # openweatherpi - CWB Tropical Cyclone Web Scraper
 # Sammy Fung <sammy@sammy.hk>
-import scrapy, re, StringIO, zipfile, os
+import scrapy, re, zipfile, os, io
 from openweatherpi.items import TropicalCycloneItem
-from datetime import datetime
+from datetime   import datetime
 
 class CwbTcSpider(scrapy.Spider):
     name = "cwb_tc"
@@ -14,6 +14,7 @@ class CwbTcSpider(scrapy.Spider):
     agency = u'CWB'
     mps2kmh = 3.6
     wind_unit = u'KMH'
+    api_url = 'http://opendata.cwb.gov.tw/opendataapi?dataid='
 
     def parse(self, response):
         items = []
@@ -21,7 +22,11 @@ class CwbTcSpider(scrapy.Spider):
         if len(bar) > 0:
             report_url = re.sub('\.htm','_content.htm', bar[0])
             items += [ scrapy.Request(url='http://www.cwb.gov.tw%s'%report_url, callback=self.parse_report) ]
-        items += [ scrapy.Request(url='http://opendata.cwb.gov.tw/doLogin', callback=self.login) ]
+        if 'CWB_APIKEY' in os.environ:
+            dataset_code = 'W-C0034-002'
+            items += [ scrapy.Request(url='%s%s&authorizationkey=%s'% \
+                                          (self.api_url, dataset_code, os.environ['CWB_APIKEY']), \
+                                      callback=self.parse_kml) ]
         return items
 
     def parse_report(self, response):
@@ -77,25 +82,13 @@ class CwbTcSpider(scrapy.Spider):
             tc['position_type'] = u'C'
             return [ tc ]
 
-    def login(self, response):
-        # Getting enviornment variables CWB_USERNAME and CWB_PASSWORD
-        form_data = { 'userid': os.environ['CWB_USERNAME'], 'password': os.environ['CWB_PASSWORD'] }
-        return [scrapy.http.FormRequest.from_response(response, formdata = form_data, callback=self.after_login)]
-
-    def after_login(self, response):
-        if 'redirect_times' in response.meta:
-            print 'not logon'
-        else:
-            return scrapy.Request(url='http://opendata.cwb.gov.tw/datadownload?dataid=W-C0034-002', callback=self.parse_kml)
-
     def parse_kml(self, response):
         tc_items = []
-        kmz = StringIO.StringIO()
+        kmz = io.BytesIO()
         kmz.write(response.body)
         kmunzip = zipfile.ZipFile(kmz)
         kml = kmunzip.open('fifows_typhoon.kml')
         lines = kml.read()
-        #num = scrapy.Selector(text=lines).xpath('//kml/document/folder/folder').extract()
         report_time = scrapy.Selector(text=lines).xpath('//kml/document/folder/description/text()').extract()[0]
         # ### Current ###
         current = scrapy.Selector(text=lines).xpath('//kml/document/folder/folder')
@@ -133,9 +126,9 @@ class CwbTcSpider(scrapy.Spider):
             tc['wind_unit'] = self.wind_unit
             tc_items.append(tc)
             # ### Forecasts ###
-            #for i in scrapy.Selector(text=lines).xpath('//kml/document/folder/folder/folder/placemark'):
             for i in cyclone.xpath('folder/placemark'):
-                forecast_time = i.xpath(u'name/text()').extract()[0].encode('ascii',"ignore")
+                forecast_time = i.xpath(u'name/text()').extract()[0]
+                forecast_time = re.sub('[月日時]', '', forecast_time)
                 forecast_location = re.split(',',i.xpath('point/coordinates/text()').extract()[0])
                 tc = TropicalCycloneItem()
                 tc['agency'] = self.agency

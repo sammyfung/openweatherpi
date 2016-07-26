@@ -19,7 +19,7 @@ class HkoTcSpider(scrapy.Spider):
 
     def parse(self, response):
         items = []
-        a = re.split(' ', response.body)
+        a = re.split(' ', str(response.body))
         num = 0
         for i in a:
             if re.search('^href="/wxinfo/currwx/tc_pos_', i):
@@ -50,10 +50,10 @@ class HkoTcSpider(scrapy.Spider):
                 item['position_time'] = re.sub(u'\s\s*', ' ', item['position_time'])
                 item['position_time'] = datetime.strptime(item['position_time'], '%Y %m %d %H')
                 item['position_time'] = item['position_time'].isoformat()
-                item['latitude'] = row[1].encode('utf-8')
+                item['latitude'] = row[1]
                 item['latitude'] = re.sub('^北\s*緯\s*', '', item['latitude'])
                 item['latitude'] = round(float(re.sub(' 度$', '', item['latitude'])), 2)
-                item['longitude'] = row[2].encode('utf-8')
+                item['longitude'] = row[2]
                 item['longitude'] = re.sub('^東\s*經\s*', '', item['longitude'])
                 item['longitude'] = round(float(re.sub(' 度$', '', item['longitude'])), 2)
                 item['wind_speed'] = int(re.split(u' ', row[4])[2])

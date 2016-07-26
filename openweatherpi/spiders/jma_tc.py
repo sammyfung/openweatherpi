@@ -30,33 +30,33 @@ class JmaTcSpider(scrapy.Spider):
                 cyclone_type = re.split(' ', tc.xpath("text()").extract()[0])[0]
             else:
                 cyclone_type = u''
-            if re.search("\([A-Z]*\)", tc.xpath("text()").extract()[0]):
+            if re.search("([A-Z]*)", tc.xpath("text()").extract()[0]):
                 tc_name = u"%s"%re.sub('.*\(', '', re.sub('\).*', '', tc.xpath("text()").extract()[0]))
             else:
                 tc_name = u''
             for i in tc.xpath('div/table/tr'):
-                if re.search(u'(Analyses at|Forecast for)', i.xpath('td').extract()[0]):
+                if re.search(u'(Analysis at|Forecast for)', i.xpath('td').extract()[0]):
                     item['agency'] = self.agency
                     item['wind_unit'] = self.wind_unit
                     item['report_time'] = report_time.isoformat()
                     item['code'] = code
                     item['cyclone_type'] = cyclone_type
                     item['name'] = tc_name
-                    if re.search(u'Analyses at', i.xpath('td').extract()[0]):
+                    if re.search(u'Analysis at', i.xpath('td').extract()[0]):
                         item['position_type'] = u'C'
                     else:
                         item['position_type'] = u'F'
-                    pos_time = re.sub('\<(Analyses at|Forecast for) ', '', i.xpath('td/text()').extract()[0])
-                    pos_time = re.split('/', re.sub(' UTC.*', '', pos_time))
+                    pos_time = re.sub('\<(Analysis at|Forecast for) ', '', i.xpath('td/text()').extract()[0])
+                    pos_time = re.split(' ', re.sub(' UTC,', '', pos_time))
                     next_month = 0
-                    if int(pos_time[0]) < report_time.day:
+                    if int(pos_time[1]) < report_time.day:
                         next_month = 1
                     if report_time.month < 10:
-                        pos_time = u"%s 0%s %s %s"%(report_time.year, report_time.month+next_month, pos_time[0],
-                                                    pos_time[1])
+                        pos_time = u"%s 0%s %s %s"%(report_time.year, report_time.month+next_month, pos_time[1],
+                                                    pos_time[0])
                     else:
-                        pos_time = u"%s %s %s %s"%(report_time.year, report_time.month+next_month, pos_time[0],
-                                                   pos_time[1])
+                        pos_time = u"%s %s %s %s"%(report_time.year, report_time.month+next_month, pos_time[1],
+                                                   pos_time[0])
                     item['position_time'] = datetime.strptime(pos_time, '%Y %m %d %H')+timedelta(hours=8)
                     item['position_time'] = item['position_time'].isoformat()
                 if len(i.xpath('td')) > 1:
